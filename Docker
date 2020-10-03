@@ -1,0 +1,163 @@
+Docker -
+
+sudo docker --version -> To check the version of docker installed on the os
+sudo docker pull <image_name> -> To download the required images from the central repo.
+sudo docker images -> To view all the docker images.
+sudo docker run -it --rm -d <image_name> -> To run the specified image via docker with some flags like
+                                -it => Will make the terminal interactive
+                                -d => Will run the thread(image || container) in the background
+                                The successful running of the image or container is seen by the display of the id on terminal.
+                                --rm => Will remove the container from the p list after stopping it
+sudo docker ps -> To list out all the containers that are currently running and not all the containers which are installed.
+sudo docker stop <container_id>-> Will stop the currently running container. The container id is got by using "sudo docker ps"
+sudo docker start <container_id> -> To start a container after stopping it by the above command.
+sudo docker ps -a -> Will list down all the containers which are already installed and which are currently running.
+sudo docker exec -it <container_id> bash -> Will allow us to work with the containers
+root@e6ebe1ca873d:/# -> container of an image
+root@e6ebe1ca873d:/# exit -> We will exit from the container.
+sudo docker kill <container_id> -> Will forcefully kill or stop the running container.
+sudo docker rm <container_id> -> Will remove the container from the system forever.
+sudo docker rmi <image_id> -> Will remove the image from the system.
+
+Now once we delete a container, all the changes made like softwares downloaded or files created are all lost.
+All these changes are not saved to the original image that we downloaded.
+To save them we need to make an image of the container. So that when-ever we want a fresh container, we can make 
+a container from the same image with the same base configuration.
+
+sudo docker commit <container_id> <custom_image_name>
+sudo docker rm -f $(sudo docker ps -a -q) -> To remove all the running and non-running containers at once
+
+--------------------------------------------------------------------------------------------------------------------------------------
+sudo usermode -aG docker $USER -> This command will prevent us from putting sudo every time we run docker
+--------------------------------------------------------------------------------------------------------------------------------------
+docker container run --publish 80:80 nginx -> Helps to start an nginx server on port 80
+sudo netstat -tlnp | grep 80 -> Helps to list all the process working on port 80. In this list the last column is the p_id. For killing the process directly use "sudo kill p_id"
+ps -eaf | grep "p_id" ->  Helps to get further information on port 80
+sudo kill p_id -> Helps to kill the particular process
+docker container run --publish 80:80 --detach webhost nginx -> Helps to publish a container with a custom name like here "webhost"
+Note - For stop a process we must just type -> docker container rm "container_id" (Note - We can also specify multiple container_id)
+ps aux -> To list all the processes on the system
+docker stop "container_name"
+docker container logs db
+docker container run -d -p 3306:3306 --name db -e MYSQL_RANDOM_ROOT_PASSWORD=yes mysql (Note - Vui7phe8ohXae4Quah1luis5Reish6oo => password required for getting logged into sql server)
+docker container run -d --name webserver -p 8080:80 httpd
+docker container run -d --name proxy -p 80:80 ngnix
+Note -> The first port number is the port number of the host machine from where we can access the www, whereas the second port number is the port number of the local container
+Note - "-d" flag is for deteaching the form the runtime of the container from the cmd and allow it to run in the background
+curl localhost
+curl localhost:8080
+curl localhost:80
+docker images ls
+
+Note -> Container Inpection commands
+sudo docker container top "container_name" -> Helps to understand the metadata of the container and provides the process list of one container
+sudo docker container inpect "container_name" -> Helps to inpect the container configuration in detail in json
+sudo docker container stats -> Performance stats of all container in real-time
+
+Getting into a container and running commands from it
+sudo docker container run -it --name proxy nginx bash -> This will get us into an new nginx container named proxy and open for us a bash command line something like ssh into a server
+sudo docker container exec -it "container_name" "programme_name(bash)" -> Will get us back into an existing container with bash command line. See an example below
+sudo docker container exec -it mysql bash -> Runs the container again after we have stopped it. When we exit the container, and do "sudo docker container ls" we still see that container running. This happens because we are restarting the container using exec
+
+sudo docker container port webhost1 -> This commads helps to show whihc ports are forwading traffic into the contianer form the host
+sudo docker container inspect --format '{{ .NetworkSettings.IPAddress }}' webhost1 -> This will help to get the IPAddress of the container.
+Note very important -> The IPAddress of the container and the host machine are always different. Container have their unique IPAddress
+
+====================================================================================================================================================
+Networking
+====================================================================================================================================================
+
+sudo docker network ls -> Lists all possible networks
+sudo docker network inspect "network_name" -> Helps to inspect a particular network
+sudo docker network ls
+NETWORK ID          NAME                DRIVER              SCOPE
+da90899f757d        bridge              bridge              local
+0fcc3af09407        compose_default     bridge              local
+dc0338b6e8ba        host                host                local
+cf8addadee99        none                null                local
+
+The bridge network and the compose_default network helps to bridge between the external internet and the local container
+The host network helps to connect the external internet to container directly hence surpassing the container firewall
+none -> Helps to connect container internally to the computer. It helps to have an interface on the computer which is not attached to any internet
+
+sudo docker network create my_app_net -> Helps to create a custom network
+sudo docker run -d --name "image_name" --network "network_name" "image_type" -> Helps to attach our container to a particular network
+sudo docker inspect my_app_net -> Helps to see the metadata of the network like which containers are attached etc
+sudo docker network connect "network_id" "container_id" -> Helps to connect a particular container to a particular network
+Note -> Just by replacing connect by disconnect we disconnect the specified container from a particular network
+sudo docker container exec -it new_ngnix ping my_nginx -> Helps to ping one network to another. Ping means to connect to a network or to a host and check if its running by transferring some metadata
+
+sudo docker image tag nginx pmparekh2000/nginx -> Helps to change the tags of an existing image. The new tag will again point to the same image with the same image_id.
+
+sudo docker push pmparekh2000/nginx-with-html -> Helps to push the image to a remote origin on hub.dokcer.com
+
+docker image prune -> To clean up just "dangling" images
+docker system prune -> Will clean up everything
+docker image prune -a -> Which will remove all images you're not using
+docker system df -> To see space usage
+
+sudo docker container run -d --name mysql -e MYSQL_ALLOW_EMPTY_PASSWORD=True -v mysql-db:/var/lib/mysql mysql -> To make a named volume with the image of mysql and having a friendly volume name
+
+sudo docker container run -d --name psql-data-1 -v psql:/var/lib/postgresql/data postgres:9.6.1 -> To run a docker container of postgres with a specified data volume
+                                                                                                   -v => Its the volume flag to specify the volume location
+sudo docker logs -f psql-data-1 => To show all logs for the specific container
+
+sudo docker swarm init -> Command to activate docker swarm
+Note - If the above command fails then try the below command
+
+sudo docker swarm init --advertise-addr "ip_address" ->  Command to activate docker swarm
+
+sudo docker service create alpine ping 8.8.8.8 -> This command will start-up a test service
+The output is as -> 
+ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
+56qmovfxhz87        gallant_lalande     replicated          1/1                 alpine:latest       
+The number below replicas is interpreted as. 1 on the left shows how many services are actually running and the 1 on the right shows how many you have specified it to run
+
+sudo docker service update "service_id" --replicas 3 -> Helps to update an ongoing service
+sudo docker container rm -f "container_name" -> Hepls to delete a container. But the container automatically gets created by its own
+
+The above phenomenon is docker orchestrastion. When we stop a container it automatically gets created. Unlike docker run which will work only on our commands. But docker orchestrastion is like a having commands in queue. So if any situation araises then follow a particular instruction
+
+
+Commands to be run before Section8
+1.) sudo docker swarm init
+2.) sudo docker swarm init --advertise-addr "ip_address"
+After this command put the token line in all workers to make them join as worker
+And if you want any node to join as manager then type -> "docker swarm join-token manager"
+The above token commands needs to be run from the node that has to be made the manager or worker
+3.) docker node ls
+4.) docker service create --replicas 3 alpine ping 8.8.8.8
+5.) docker service ls
+6.) docker node ps
+7.) docker node ps node2
+8.) docker service ps "custom_name under the NAME column"
+
+docker network create --driver overlay mydrupal -> Will create a custom network
+Note -> Overlay network is the only kind of netwrk that we can use in swarm. Since overlay networks helps us to scale across swarm nodes as if they were on the local network
+docker service create --name psql --network mydrupal -e POSTGRES_PASSWORD=mypass postgres -> Will create a new postgres image
+
+Stack in Docker
+
+docker stack deploy -c example-voting-app-stack.yml voteapp -> Deploying a stack
+sudo docker stack ls -> For listing down all the stacks
+sudo docker stack ps "stack_name" -> For listing down all the stack services
+Note -> If we redeploy the stack command then its like updating the original stack.
+
+sudo docker stack deploy -c docker-compose.yml mydb -> This will deploy a secret
+
+
+Making private regirty
+
+Follow the step below to make a private registry and push and pull images form it
+
+sudo docker container run -d -p 5000:5000 --name registry registry -> For downloading the registry image from official site and also making a container of the same
+sudo docker pull hello-world -> Downloading a test image
+sudo docker run hello-world -> Running a container of the test image
+sudo docker tag hello-world 127.0.0.1:5000/hello-world -> Creating the tag on the same image
+sudo docker push 127.0.0.1:5000/hello-world -> Pushing our image from locally to the private registry
+sudo docker push 127.0.0.1:5000/hello-world -> For pulling the image from the registry
+
+After performing the 4th command from top we have created a tag to the same image. 
+So for delete everything locally we first delete the hello-world image
+Now if we try to delete this 127.0.0.1:5000/hello-world image directly then it will give error that a container is still using the image, so first delete the container and then delete the image
+
